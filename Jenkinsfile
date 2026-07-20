@@ -1,34 +1,57 @@
 pipeline {
     agent any
 
+    parameters {
+
+    choice(
+        name: 'ENVIRONMENT',
+        choices: ['development', 'production'],
+        description: 'Select deployment environment'
+    )
+
+}
+
+    environment {
+        IMAGENAME = 'jenkins-demo'
+        PORT = '8081'
+        DOCKERNAME = 'demo-web'
+    }
+
     stages {
 
-        stage('Checkout') {
-            steps {
-                echo 'Checking out source code...'
-                checkout scm
-            }
-        }
+        
 
         stage('Build Docker Image') {
             steps {
+
+                 echo "Deploying to ${params.ENVIRONMENT}"
+
                 echo 'Building Docker image...'
-                sh 'docker build -t jenkins-demo .'
+                sh "docker build -t ${IMAGENAME} ."
             }
         }
 
-        stage('Deploy Container') {
+        stage('STOP Existing Container') {
             steps {
-                echo 'Deploying application...'
+                echo 'Stopping existing container...'
 
-                sh '''
-                    docker rm -f demo-web || true
+                sh "
+                    docker rm -f ${DOCKERNAME} || true
 
+                "
+            }
+        }
+
+        stage('RUN Docker Container') {
+            steps {
+                echo 'Running Docker container...'
+                sh "
                     docker run -d \
-                      --name demo-web \
-                      -p 8081:80 \
-                      jenkins-demo
-                '''
+                      --name ${DOCKERNAME} \
+                      -p ${PORT}:80 \
+                      ${IMAGENAME}
+                      
+                      "
             }
         }
 
