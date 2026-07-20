@@ -42,6 +42,24 @@ docker rm -f $CONTAINER_NAME || true
 '''
             }
         }
+        stage('Configure Deployment') {
+    steps {
+        script {
+
+            if (params.ENVIRONMENT == "development") {
+                env.PORT = "8081"
+                env.CONTAINER_NAME = "demo-web-dev"
+            } else {
+                env.PORT = "8082"
+                env.CONTAINER_NAME = "demo-web-prod"
+            }
+
+            echo "Environment: ${params.ENVIRONMENT}"
+            echo "Container: ${env.CONTAINER_NAME}"
+            echo "Port: ${env.PORT}"
+        }
+    }
+}
 
         stage('RUN Docker Container') {
             steps {
