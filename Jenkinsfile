@@ -14,9 +14,7 @@ pipeline {
 
 }
 
-   environment {
-    IMAGE_NAME = 'jenkins-demo'
-}
+  
 
     stages {
         stage('Configure Deployment') {
@@ -38,41 +36,46 @@ pipeline {
 }
 
         
-
         stage('Build Docker Image') {
-            steps {
-
-                 echo "Deploying to ${params.ENVIRONMENT}"
-
-                echo 'Building Docker image...'
-                sh '''
-docker build -t $IMAGE_NAME .
-'''
+        steps    
+            {
+            sh """
+            docker build \
+            -t imeshsilva/jenkins-demo:${env.BUILD_NUMBER} \
+            -t imeshsilva/jenkins-demo:latest \
+            .
+            """
             }
-        }
-
-        stage('STOP Existing Container') {
-            steps {
-                echo 'Stopping existing container...'
-
-                sh """
-docker rm -f ${containerName} || true
-"""
             }
+
+            stage('Push Image') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-creds',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh """
+            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+
+            docker push imeshsilva/jenkins-demo:${env.BUILD_NUMBER}
+            docker push imeshsilva/jenkins-demo:latest
+
+            docker logout
+            """
         }
+    }
+}
+
+stage('Deploy'){
+    steps{
+        sh '''
+        docker compose down || true
+        docker compose up -d
+        '''
+    }
+}
         
-
-        stage('RUN Docker Container') {
-            steps {
-                echo 'Running Docker container...'
-                sh """
-docker run -d \
-  --name ${containerName} \
-  -p ${port}:80 \
-  \$IMAGE_NAME
-"""
-            }
-        }
 
     }
 
