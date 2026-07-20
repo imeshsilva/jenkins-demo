@@ -12,9 +12,9 @@ pipeline {
 }
 
     environment {
-        IMAGENAME = 'jenkins-demo'
-        PORT = '8081'
-        DOCKERNAME = 'demo-web'
+        IMAGE_NAME = 'jenkins-demo'
+         CONTAINER_NAME = 'demo-web'
+         PORT = '8081'
     }
 
     stages {
@@ -27,7 +27,9 @@ pipeline {
                  echo "Deploying to ${params.ENVIRONMENT}"
 
                 echo 'Building Docker image...'
-                sh "docker build -t ${IMAGENAME} ."
+                sh '''
+docker build -t $IMAGE_NAME .
+'''
             }
         }
 
@@ -35,23 +37,21 @@ pipeline {
             steps {
                 echo 'Stopping existing container...'
 
-                sh "
-                    docker rm -f ${DOCKERNAME} || true
-
-                "
+                sh '''
+docker rm -f $CONTAINER_NAME || true
+'''
             }
         }
 
         stage('RUN Docker Container') {
             steps {
                 echo 'Running Docker container...'
-                sh "
-                    docker run -d \
-                      --name ${DOCKERNAME} \
-                      -p ${PORT}:80 \
-                      ${IMAGENAME}
-                      
-                      "
+                sh '''
+docker run -d \
+  --name $CONTAINER_NAME \
+  -p $PORT:80 \
+  $IMAGE_NAME
+'''
             }
         }
 
