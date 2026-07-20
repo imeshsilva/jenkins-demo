@@ -23,7 +23,7 @@ pipeline {
     steps {
         script {
     if (params.ENVIRONMENT == "development") {
-        containerName = "demo-web-dev"
+        containerName = "demo-web"
         port = "8081"
     } else {
         containerName = "demo-web-prod"
