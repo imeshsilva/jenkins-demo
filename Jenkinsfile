@@ -19,6 +19,23 @@ pipeline {
 }
 
     stages {
+        stage('Configure Deployment') {
+    steps {
+        script {
+    if (params.ENVIRONMENT == "development") {
+        containerName = "demo-web-dev"
+        port = "8081"
+    } else {
+        containerName = "demo-web-prod"
+        port = "8082"
+    }
+
+    echo "Environment: ${params.ENVIRONMENT}"
+    echo "Container: ${containerName}"
+    echo "Port: ${port}"
+}
+    }
+}
 
         
 
@@ -38,28 +55,12 @@ docker build -t $IMAGE_NAME .
             steps {
                 echo 'Stopping existing container...'
 
-                ssh """
+                sh """
 docker rm -f ${containerName} || true
 """
             }
         }
-        stage('Configure Deployment') {
-    steps {
-        script {
-    if (params.ENVIRONMENT == "development") {
-        containerName = "demo-web-dev"
-        port = "8081"
-    } else {
-        containerName = "demo-web-prod"
-        port = "8082"
-    }
-
-    echo "Environment: ${params.ENVIRONMENT}"
-    echo "Container: ${containerName}"
-    echo "Port: ${port}"
-}
-    }
-}
+        
 
         stage('RUN Docker Container') {
             steps {
@@ -68,7 +69,7 @@ docker rm -f ${containerName} || true
 docker run -d \
   --name ${containerName} \
   -p ${port}:80 \
-  ${IMAGE_NAME}
+  \$IMAGE_NAME
 """
             }
         }
