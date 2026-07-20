@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   web:
@@ -7,3 +5,9 @@ services:
     container_name: demo-web
     ports:
       - "8081:80"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: demo-redis
