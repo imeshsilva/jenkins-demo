@@ -1,3 +1,6 @@
+def containerName = ""
+def port = ""
+
 pipeline {
     agent any
 
@@ -11,11 +14,9 @@ pipeline {
 
 }
 
-    environment {
-        IMAGE_NAME = 'jenkins-demo'
-         CONTAINER_NAME = 'demo-web'
-         PORT = '8081'
-    }
+   environment {
+    IMAGE_NAME = 'jenkins-demo'
+}
 
     stages {
 
@@ -37,39 +38,38 @@ docker build -t $IMAGE_NAME .
             steps {
                 echo 'Stopping existing container...'
 
-                sh '''
-docker rm -f $CONTAINER_NAME || true
-'''
+                ssh """
+docker rm -f ${containerName} || true
+"""
             }
         }
         stage('Configure Deployment') {
     steps {
         script {
+    if (params.ENVIRONMENT == "development") {
+        containerName = "demo-web-dev"
+        port = "8081"
+    } else {
+        containerName = "demo-web-prod"
+        port = "8082"
+    }
 
-            if (params.ENVIRONMENT == "development") {
-                env.PORT = "8081"
-                env.CONTAINER_NAME = "demo-web-dev"
-            } else {
-                env.PORT = "8082"
-                env.CONTAINER_NAME = "demo-web-prod"
-            }
-
-            echo "Environment: ${params.ENVIRONMENT}"
-            echo "Container: ${env.CONTAINER_NAME}"
-            echo "Port: ${env.PORT}"
-        }
+    echo "Environment: ${params.ENVIRONMENT}"
+    echo "Container: ${containerName}"
+    echo "Port: ${port}"
+}
     }
 }
 
         stage('RUN Docker Container') {
             steps {
                 echo 'Running Docker container...'
-                sh '''
+                sh """
 docker run -d \
-  --name $CONTAINER_NAME \
-  -p $PORT:80 \
-  $IMAGE_NAME
-'''
+  --name ${containerName} \
+  -p ${port}:80 \
+  ${IMAGE_NAME}
+"""
             }
         }
 
